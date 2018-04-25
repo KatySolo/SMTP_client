@@ -2,8 +2,6 @@ import base64
 import socket
 import ssl
 import configparser
-import time
-import datetime
 
 config = configparser.ConfigParser()
 config.read("message/setting.ini")
@@ -46,7 +44,7 @@ def form_message(theme, addresses, message, attachmenets):
     text =""
     text += "From: Katy Solo (test.katy.solo@yandex.ru)\n"
     text += "To: " + ','.join(addresses) + '\n'
-    text += "Subject: " + theme +'\n'
+    text += "Subject: " + '=?UTF-8?B?'+base64.b64encode(theme.encode()).decode()+'?=' +'\n'
     if attachments:
         text += "Content-Type: multipart/mixed; boundary = +++\n\n\n"
         if message:
@@ -66,15 +64,12 @@ def form_message(theme, addresses, message, attachmenets):
         text += message
     return text + '\n.'
 
-
-# form_message(theme,addresses, message, attachments)
-
 input_lines = ['EHLO hackerman.ru', 'AUTH LOGIN',
                base64.b64encode('test.katy.solo@yandex.ru'.encode()).decode(),
                base64.b64encode('qwertyKate98'.encode()).decode(),
                'MAIL FROM: test.katy.solo@yandex.ru',
                'RCPT TO: colo18@yandex.ru',
-               # 'RCPT TO: test.katy.solo@yandex.ru',
+               'RCPT TO: test.katy.solo@yandex.ru',
                'DATA',
                 form_message(theme,addresses,message,attachments),
                'QUIT'
