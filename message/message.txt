@@ -1,0 +1,7 @@
+Hi!
+
+This is letter from my own SMTP client
+Также и на русском языке
+
+Best wishes,
+Kate
