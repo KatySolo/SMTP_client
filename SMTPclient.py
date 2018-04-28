@@ -2,6 +2,7 @@ import base64
 import socket
 import ssl
 import configparser
+import datetime
 
 config = configparser.ConfigParser()
 config.read("message/setting.ini")
@@ -13,10 +14,25 @@ attachments = config.get("Settings", "Attachments").split(',')
 if '' in attachments:
     attachments.remove('')
 
-message = ''
-with open ('message/message.txt', 'r') as f:
-    for line in f:
-        message += line
+def create_boundary():
+    return str(hash(datetime.datetime.now()))
+
+def create_message():
+    text = ''
+    with open ('message/message.txt', 'r') as f:
+        for line in f:
+            if line == '.\n':
+                text += '+'
+            else:
+                text += line
+        return text
+
+
+boundary = create_boundary()
+message = create_message()
+while message.count('--'+boundary) != 0:
+    boundary = create_boundary()
+    message = create_message()
 
 class UnsupportedTypeError(Exception):
     pass
@@ -46,19 +62,19 @@ def form_message(theme, addresses, message, attachmenets):
     text += "To: " + ','.join(addresses) + '\n'
     text += "Subject: " + '=?UTF-8?B?'+base64.b64encode(theme.encode()).decode()+'?=' +'\n'
     if attachments:
-        text += "Content-Type: multipart/mixed; boundary = +++\n\n\n"
+        text += "Content-Type: multipart/mixed; boundary ="+boundary+"\n\n\n"
         if message:
-            text += '--+++\n'
+            text += '--'+boundary+'\n'
             text += 'Content-Type: text/plain; charset=utf-8\n\n'
             text += message
         for a in attachments:
             name_base64 = '"=?UTF-8?B?'+base64.b64encode(a.encode()).decode()+'?="'
-            text += '--+++\n'
+            text += '--'+boundary+'\n'
             text += 'Content-Disposition: attachment; filename='+name_base64+'\n'
             text += 'Content-Transfer-Encoding: base64\n'
             text += "Content-Type: " + get_type(a.split('.')[1]) + ' name='+ name_base64+'\n\n'
             text += code_file_base64(a).decode() + '\n'
-        text += '--+++--'
+        text += '--'+boundary+'--'
     else:
         text += 'Content-Type: text/plain; charset=utf-8\n\n'
         text += message
